@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # Note: Using local Ollama service instead of Docker container
+  # The local Ollama service is already running on the host
+
+  # MIA Gateway service
+  mia-gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gateway
+    container_name: mcpgw-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - LOG_LEVEL=info
+      - GATEWAY_HOST=0.0.0.0
+      - GATEWAY_PORT=8000
+    volumes:
+      - ../config:/app/config:ro
+      - ../logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - mcpgw-network
+
+  # Weather MCP Server (example)
+  weather-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.weather-server
+    container_name: mcpgw-weather-server
+    ports:
+      - "8001:8001"
+    environment:
+      - SERVER_PORT=8001
+      - LOG_LEVEL=info
+    volumes:
+      - ../logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - mcpgw-network
+
+  # Demo client runner (optional)
+  demo-client:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.demo-client
+    container_name: mcpgw-demo-client
+    environment:
+      - GATEWAY_URL=http://mia-gateway:8000
+      - LOG_LEVEL=info
+    depends_on:
+      mia-gateway:
+        condition: service_healthy
+    volumes:
+      - ../logs:/app/logs
+    profiles:
+      - demo
+    networks:
+      - mcpgw-network
+
+  # Monitoring and observability (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mcpgw-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+    networks:
+      - mcpgw-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mcpgw-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    profiles:
+      - monitoring
+    networks:
+      - mcpgw-network
+
+volumes:
+  ollama_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  mcpgw-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

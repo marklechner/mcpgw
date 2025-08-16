@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'mia-gateway'
+    static_configs:
+      - targets: ['mia-gateway:9000']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  - job_name: 'weather-server'
+    static_configs:
+      - targets: ['weather-server:8001']
+    scrape_interval: 15s
+    metrics_path: /metrics

@@ -1,0 +1,52 @@
+# MIA Gateway Configuration
+
+# Server settings
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  log_level: "info"
+
+# Ollama LLM settings
+ollama:
+  url: "http://localhost:11434"
+  model: "llama3.1"
+  timeout: 30
+  max_retries: 3
+
+# Intent analysis settings
+intent_analysis:
+  confidence_threshold: 0.7
+  max_analysis_time: 10
+  enable_drift_detection: true
+  drift_analysis_window_hours: 24
+
+# Contract settings
+contracts:
+  default_duration_minutes: 120
+  max_duration_minutes: 1440  # 24 hours
+  cleanup_interval_minutes: 5
+  max_violations_before_deactivation: 5
+
+# Security settings
+security:
+  enable_request_logging: true
+  log_sensitive_data: false
+  max_request_size: 1048576  # 1MB
+  rate_limiting:
+    enabled: true
+    default_requests_per_minute: 60
+
+# Monitoring
+monitoring:
+  enable_metrics: true
+  metrics_port: 9000
+  health_check_interval: 30
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/mia_gateway.log"
+  max_size_mb: 100
+  backup_count: 5

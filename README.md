@@ -1,276 +1,380 @@
-# MCP Gateway
+# MCP Gateway MIA - Intent-Aware Security Layer
 
-A lightweight, security-focused FastAPI gateway for Model Context Protocol (MCP) servers. This gateway acts as an intermediary between MCP clients and servers, providing authentication, authorization, rate limiting, request validation, and audit logging.
+**Intent-aware security layer for MCP (Model Context Protocol) interactions.**
 
-## Features
+Instead of asking *"Can this client access this tool?"*, MIA asks: *"Does this transaction serve the agreed intent between client and server?"*
 
-### Security
-- **Authentication & Authorization**: Token-based authentication with configurable client policies
-- **Request Validation**: Validates requests against allowed tools and resources
-- **Response Sanitization**: Removes sensitive information from responses
-- **Rate Limiting**: Token bucket algorithm for request rate limiting
-- **Audit Logging**: Comprehensive logging of all requests and responses
-- **Sandbox Mode**: Isolates MCP server execution (planned enhancement)
+## 🚀 Quick Start
 
-### Gateway Functionality
-- **Request Proxying**: Forwards validated requests to appropriate MCP servers
-- **Policy Enforcement**: Enforces client-specific security policies
-- **Error Handling**: Graceful error handling with proper HTTP status codes
-- **CORS Support**: Configurable CORS policies for web clients
-
-### Monitoring & Management
-- **Health Checks**: Built-in health check endpoint
-- **Metrics**: Request metrics and performance monitoring (planned)
-- **Admin API**: Client registration and management endpoints
-
-## Quick Start
-
-### Installation
-
-1. Clone or create the project directory:
 ```bash
-mkdir mcpgw && cd mcpgw
+# Clone and setup
+git clone <repository-url>
+cd mcpgw
+
+# One-command setup (installs Ollama, pulls models, sets up environment)
+./setup.sh
+
+# Start all services
+./start.sh
+
+# Run complete demonstration
+./demo.sh
 ```
 
-2. Install dependencies:
+## 🎯 What is MIA?
+
+**Mutual Intent Agreement (MIA)** is a new approach to AI tool security that replaces static permission systems with dynamic, semantic understanding of client intentions and server capabilities.
+
+### The Paradigm Shift
+
+**Traditional Security:**
+- Static permission lists
+- "Can user X access tool Y?"
+- Binary allow/deny decisions
+- No understanding of purpose
+
+**MIA Security:**
+- Dynamic intent analysis
+- "Does this transaction serve the agreed purpose?"
+- Semantic understanding of interactions
+- Context-aware security decisions
+
+## 🏗️ How MIA Works
+
+### 3-Phase Process
+
+#### Phase 1: Declaration
+- **Clients** declare their intent: *"I need weather data for travel planning"*
+- **Servers** register capabilities: *"I provide public weather data, no tracking"*
+
+#### Phase 2: Negotiation
+- **LLM analyzes** semantic compatibility between intent and capability
+- **Creates binding contract** with agreed terms and constraints
+- **Establishes trust** through mutual understanding
+
+#### Phase 3: Validation
+- **Every transaction** validated against the agreed intent
+- **Real-time monitoring** for intent drift and violations
+- **Bidirectional protection** for both clients and servers
+
+### Example Flow
+
+```python
+# Client declares intent
+client_intent = {
+    "purpose": "I need weather data for travel planning",
+    "constraints": ["no_personal_data", "read_only", "public_data_only"],
+    "data_requirements": ["current_weather", "forecasts"]
+}
+
+# Server registers capability
+server_capability = {
+    "provides": ["weather_data", "forecasts"],
+    "boundaries": ["no_pii", "public_data_only"],
+    "supported_operations": ["read"]
+}
+
+# LLM analyzes compatibility
+compatibility = await analyzer.analyze_intent_compatibility(
+    client_intent, server_capability
+)
+
+# Contract created if compatible
+if compatibility.status == "compatible":
+    contract = IntentContract(
+        agreed_purpose=client_intent.purpose,
+        constraints=client_intent.constraints + compatibility.suggested_constraints
+    )
+```
+
+## 🛡️ Bidirectional Protection
+
+MIA protects **both parties** in AI tool interactions:
+
+### Server Protection
+- Validates client requests against declared intent
+- Prevents scope creep and malicious usage
+- Detects intent drift over time
+
+### Client Protection (Enhanced Feature)
+- Validates server responses against client constraints
+- Prevents data leakage and privacy violations
+- Blocks tracking attempts and unexpected data
+
+### Protection Examples
+
+**Scenario 1: Intent Violation (Server Protection)**
+```
+Client Intent: "Weather data for travel planning"
+Malicious Request: get_personal_location_history()
+MIA Action: ❌ BLOCKED - Violates travel planning intent
+```
+
+**Scenario 2: Privacy Violation (Client Protection)**
+```
+Client Constraint: "no_location_tracking"
+Server Response: { weather: "sunny", user_location: "37.7749,-122.4194" }
+MIA Action: ❌ BLOCKED - Violates no tracking constraint
+```
+
+## 🧠 LLM-Powered Analysis
+
+MIA uses sophisticated LLM analysis for semantic understanding:
+
+### Intent Compatibility Analysis
+```python
+system_prompt = """You are an AI security analyst specializing in Mutual Intent Agreement (MIA) systems. Your role is to perform deep semantic analysis of client intentions and server capabilities to determine compatibility for secure AI tool interactions.
+
+CORE PRINCIPLES:
+1. Semantic Understanding: Analyze the MEANING and PURPOSE behind requests
+2. Intent Alignment: Evaluate if client's declared purpose aligns with server capabilities
+3. Risk Assessment: Identify potential security, privacy, and misuse risks
+4. Constraint Synthesis: Recommend specific constraints to ensure safe interaction"""
+```
+
+### Real-time Transaction Validation
+- Every request analyzed for intent alignment
+- Context-aware security decisions
+- Detailed reasoning for all decisions
+- Confidence scoring and risk assessment
+
+## 📊 Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   MIA Gateway   │    │  Ollama Client  │    │ Weather Server  │
+│                 │    │                 │    │                 │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
+│ │IntentBroker │ │◄──►│ │LLM Analysis │ │    │ │ MCP Tools   │ │
+│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
+│ ┌─────────────┐ │    │                 │    │                 │
+│ │ Contracts   │ │    │ gpt-oss20b-128k │    │ FastAPI Server  │
+│ └─────────────┘ │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                        │                        │
+        └────────────────────────┼────────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │ Travel Client   │
+                    │                 │
+                    │ Python Client   │
+                    │ Demonstrates    │
+                    │ Complete MIA    │
+                    └─────────────────┘
+```
+
+### Core Components
+
+- **IntentBroker**: Orchestrates the 3-phase MIA process
+- **IntentAnalyzer**: LLM-powered semantic analysis using local Ollama
+- **IntentContract**: Binding agreements with lifecycle management
+- **MIA Gateway**: FastAPI application with intent validation middleware
+
+## 🔧 API Endpoints
+
+### Intent Management
+- `POST /intent/declare` - Client declares intent
+- `POST /capability/register` - Server registers capabilities
+- `POST /intent/negotiate` - Negotiate intent contract
+- `GET /intent/contracts` - List active contracts
+- `GET /intent/capabilities` - List server capabilities
+
+### Transaction Processing
+- `POST /mcp/request` - Intent-validated MCP proxy
+- `GET /intent/violations` - View contract violations
+- `GET /status` - System status and monitoring
+
+### Example API Usage
 ```bash
+# Declare client intent
+curl -X POST http://localhost:8000/intent/declare \
+  -H "Content-Type: application/json" \
+  -d '{
+    "purpose": "I need weather data for travel planning",
+    "data_requirements": ["current_weather", "forecasts"],
+    "constraints": ["no_personal_data", "read_only"]
+  }'
+
+# Negotiate contract
+curl -X POST http://localhost:8000/intent/negotiate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_intent_id": "intent-123",
+    "server_capability_id": "weather-server-456"
+  }'
+
+# Make validated request
+curl -X POST http://localhost:8000/mcp/request \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contract_id": "contract-789",
+    "server_name": "weather-server",
+    "request": {
+      "method": "tools/call",
+      "params": {
+        "name": "get_current_weather",
+        "arguments": {"location": "Paris"}
+      }
+    }
+  }'
+```
+
+## 🐳 Local Development
+
+### Prerequisites
+- Docker and Docker Compose
+- Python 3.9+
+- macOS (for Ollama integration)
+
+### Setup
+```bash
+# Complete setup (one command)
+./setup.sh
+
+# Manual setup
+brew install ollama
+ollama pull gpt-oss20b-128k
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Run the gateway:
+### Development Commands
 ```bash
-python main.py
+# Start all services
+./start.sh
+
+# Stop all services
+./stop.sh
+
+# Clean restart
+./stop.sh --clean && ./start.sh
+
+# View logs
+docker compose -f docker/docker-compose.yml logs -f
+
+# Run demo
+./demo.sh
 ```
 
-The gateway will start on `http://localhost:8000`
+### Service URLs
+- **MIA Gateway**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+- **Gateway Health**: http://localhost:8000/health
+- **Ollama API**: http://localhost:11434
 
-### Basic Usage
+## 📋 Demo Scenarios
 
-1. **Health Check**:
-```bash
-curl http://localhost:8000/health
-```
+The included demo showcases:
 
-2. **Register a Client** (for testing):
-```bash
-curl -X POST http://localhost:8000/admin/register-client \
-  -H "Content-Type: application/json" \
-  -d '{
-    "client_id": "my-client",
-    "client_secret": "my-secret",
-    "policy": {
-      "allowed_tools": ["get_weather"],
-      "allowed_resources": ["weather://*"],
-      "max_requests_per_minute": 100,
-      "require_auth": true,
-      "sandbox_mode": true
-    }
-  }'
-```
+### 1. Basic MIA Flow
+- Intent declaration and capability registration
+- LLM-powered compatibility analysis
+- Contract negotiation and activation
 
-3. **Make MCP Request**:
-```bash
-curl -X POST http://localhost:8000/mcp/request \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "server_name": "example-weather",
-    "request": {
-      "jsonrpc": "2.0",
-      "method": "tools/list",
-      "id": "1"
-    }
-  }'
-```
+### 2. Intent-Validated Requests
+- Weather requests aligned with travel planning intent
+- Real-time validation against contract terms
 
-## Configuration
+### 3. Violation Detection
+- Attempts to access data outside declared intent
+- Automatic blocking with detailed reasoning
 
-### Security Policies
+### 4. Python Client Integration
+- Complete application using MIA
+- Multi-destination trip planning
+- Session management and error handling
 
-Each client can have a custom security policy:
+### 5. Bidirectional Protection
+- Server response validation
+- Privacy violation detection
+- Client protection from malicious servers
 
-```python
-{
-  "allowed_tools": ["tool1", "tool2"],           # Allowed tool names
-  "allowed_resources": ["resource://*"],         # Resource patterns (regex)
-  "max_requests_per_minute": 60,                # Rate limit
-  "max_request_size": 1048576,                  # Max request size (bytes)
-  "require_auth": true,                         # Require authentication
-  "allowed_origins": ["https://example.com"],   # CORS origins
-  "sandbox_mode": true                          # Enable sandboxing
-}
-```
-
-### MCP Server Configuration
-
-Configure MCP servers in the `MCPServerManager.load_server_config()` method or via configuration files:
-
-```python
-{
-  "server-name": {
-    "command": "node",
-    "args": ["/path/to/server/build/index.js"],
-    "env": {"API_KEY": "your-key"},
-    "enabled": true
-  }
-}
-```
-
-## API Endpoints
-
-### Public Endpoints
-
-- `GET /health` - Health check
-- `POST /admin/register-client` - Register new client (admin only)
-
-### Authenticated Endpoints
-
-- `GET /servers` - List available MCP servers
-- `POST /mcp/request` - Proxy MCP request to server
-- `GET /audit/logs` - Get audit logs
-
-## Security Features
-
-### Authentication
-- Bearer token authentication
-- Client-specific tokens with policies
-- Token validation and expiration
-
-### Request Validation
-- Method validation against allowed tools/resources
-- Request size limits
-- Input sanitization
-- Policy enforcement
-
-### Rate Limiting
-- Token bucket algorithm
-- Per-client rate limits
-- Configurable limits per security policy
-
-### Audit Logging
-- All requests logged with timestamps
-- Client identification
-- Success/failure tracking
-- Error details
-
-### Response Sanitization
-- Removes sensitive fields (passwords, tokens, keys, secrets)
-- Recursive sanitization of nested objects
-- Configurable sensitive field patterns
-
-## Architecture
-
-```
-Client → Gateway → MCP Server
-   ↓        ↓         ↓
-Auth    Validation  Response
-Rate    Logging     Sanitization
-Limit   Policy      Error Handling
-        Enforcement
-```
-
-### Components
-
-1. **SecurityManager**: Handles authentication, authorization, and policy enforcement
-2. **MCPServerManager**: Manages connections and communication with MCP servers
-3. **RateLimitBucket**: Implements token bucket rate limiting
-4. **FastAPI App**: HTTP server with middleware and endpoints
-
-## Future Enhancements
-
-### Security
-- [ ] JWT token support
-- [ ] OAuth2 integration
-- [ ] Role-based access control (RBAC)
-- [ ] Request signing and verification
-- [ ] IP whitelisting/blacklisting
-- [ ] Advanced sandboxing with containers
-
-### Functionality
-- [ ] WebSocket support for real-time communication
-- [ ] Request/response caching
-- [ ] Load balancing across multiple MCP servers
-- [ ] Circuit breaker pattern for fault tolerance
-- [ ] Request transformation and middleware
-
-### Monitoring
-- [ ] Prometheus metrics
-- [ ] Distributed tracing
-- [ ] Performance monitoring
-- [ ] Alert system
-- [ ] Dashboard UI
-
-### Storage
-- [ ] Redis backend for rate limiting
-- [ ] Database storage for audit logs
-- [ ] Configuration management UI
-- [ ] Client management dashboard
-
-## Development
-
-### Running in Development Mode
+## 🔍 Example Output
 
 ```bash
-python main.py
+🔐 Demo 1: Basic Mutual Intent Agreement Flow
+==============================================
+[SUCCESS] Intent declared successfully!
+[SUCCESS] Contract negotiated successfully!
+[DEMO] Contract ID: b9fc1ff8-be7d-47fd-a6cc-585e698d8abf
+
+🌤️ Demo 2: Intent-Validated MCP Requests
+==========================================
+[SUCCESS] Weather request validated and processed!
+[SUCCESS] Forecast request validated and processed!
+
+🚨 Demo 3: Intent Violation Detection
+=====================================
+[SUCCESS] Intent violation correctly detected and blocked!
+[DEMO] Validation Result: invalid
+[DEMO] Reasons: ['The request calls `get_personal_location_history`, which retrieves personal location data.', 'This violates the constraint `no_personal_data_storage`...']
 ```
 
-The server will reload automatically on code changes.
+## 🎯 Key Benefits
 
-### Testing
+### For Developers
+- **Semantic Security**: Understanding of intent, not just permissions
+- **Dynamic Policies**: Security adapts to declared purposes
+- **Transparent Decisions**: Every security decision explained
+- **Bidirectional Trust**: Protection for both clients and servers
 
-Create test clients and policies:
+### For Organizations
+- **Reduced Risk**: Intent-aware security prevents misuse
+- **Audit Trail**: Complete record of all interactions and decisions
+- **Compliance**: Built-in privacy and data protection
+- **Scalability**: No static permission lists to maintain
 
-```python
-# Example test client
-test_policy = SecurityPolicy(
-    allowed_tools={"get_weather", "get_forecast"},
-    allowed_resources={"weather://*"},
-    max_requests_per_minute=100
-)
+### For AI Systems
+- **Context Awareness**: Security decisions based on purpose
+- **Intent Drift Detection**: Automatic detection of changing behavior
+- **Adaptive Protection**: Security evolves with usage patterns
+- **Mutual Trust**: Both parties protected through verified intent
 
-test_client = ClientConfig(
-    client_id="test-client",
-    client_secret="test-secret",
-    policy=test_policy
-)
-```
+## 🚀 A next step in AI Security
 
-### Adding New MCP Servers
+MIA represents a shift in how we think about AI tool security:
 
-1. Update the `MCPServerManager.load_server_config()` method
-2. Add server configuration with command, args, and environment
-3. Implement actual MCP communication in `send_request()` method
+- **From Permissions to Intent**: Understanding purpose, not just access
+- **From Static to Dynamic**: Security that adapts to context
+- **From One-sided to Mutual**: Protection for all parties
+- **From Binary to Semantic**: Nuanced understanding of interactions
 
-## Security Considerations
+## 📚 Technical Details
 
-### Threat Model
+### Data Models
+- **ClientIntentDeclaration**: Client's declared purpose and constraints
+- **ServerCapabilityDeclaration**: Server's capabilities and boundaries
+- **IntentContract**: Binding agreement with lifecycle management
+- **IntentTransactionValidation**: Real-time validation results
 
-The gateway protects against:
-- **Malicious MCP servers**: Policy enforcement prevents unauthorized access
-- **Compromised clients**: Rate limiting and validation prevent abuse
-- **Data exfiltration**: Response sanitization removes sensitive data
-- **DoS attacks**: Rate limiting and request size limits
-- **Injection attacks**: Input validation and sanitization
+### LLM Integration
+- **Local Ollama**: No cloud dependencies, complete privacy
+- **128K Context Window**: Handles complex intent analysis
+- **Sophisticated Prompts**: Deep semantic understanding
+- **Confidence Scoring**: Quantified trust in decisions
 
-### Best Practices
+### Monitoring & Analytics
+- **Real-time Metrics**: Transaction success rates, violations
+- **Intent Drift Analysis**: Detection of changing behavior patterns
+- **Contract Lifecycle**: Creation, validation, expiration tracking
+- **Audit Logging**: Complete record of all security decisions
 
-1. **Use strong authentication tokens**
-2. **Implement least-privilege policies**
-3. **Monitor audit logs regularly**
-4. **Keep dependencies updated**
-5. **Use HTTPS in production**
-6. **Implement proper error handling**
-7. **Regular security audits**
+## 🤝 Contributing
 
-## License
+This project demonstrates the first practical implementation of intent-aware AI tool governance. Contributions welcome for:
 
-This project is provided as an MVP example. Enhance and adapt according to your security requirements.
+- Additional intent patterns and templates
+- Enhanced LLM analysis capabilities
+- New MCP server integrations
+- Security policy improvements
 
-## Contributing
+## 📄 License
 
-This is an MVP implementation. Key areas for contribution:
-- Real MCP server communication implementation
-- Enhanced security features
-- Performance optimizations
-- Comprehensive testing
-- Documentation improvements
+MIT License - See LICENSE file for details.
+
+---
+
+**MIA represents a next step in AI tool security - where intent alignment replaces permission management, creating truly intelligent and adaptive security systems.**
+
+🚀 **Ready to see intent-aware security in action? Run `./demo.sh` and see how it works!**
