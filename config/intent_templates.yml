@@ -1,0 +1,60 @@
+# Common Intent Templates for MIA
+
+common_intents:
+  data_analysis:
+    purpose_patterns:
+      - "analyze"
+      - "research" 
+      - "study"
+      - "investigate"
+    allowed_operations: ["read", "aggregate", "compute"]
+    forbidden_operations: ["modify", "delete", "export"]
+    typical_constraints:
+      - "read_only_access"
+      - "no_personal_data"
+      - "aggregated_results_only"
+
+  travel_planning:
+    purpose_patterns:
+      - "travel"
+      - "trip"
+      - "vacation"
+      - "journey"
+    allowed_operations: ["read", "query", "forecast"]
+    data_requirements:
+      - "weather_data"
+      - "location_info"
+      - "public_information"
+    typical_constraints:
+      - "public_data_only"
+      - "no_location_tracking"
+      - "travel_context_only"
+
+  business_intelligence:
+    purpose_patterns:
+      - "business"
+      - "market"
+      - "financial"
+      - "commercial"
+    allowed_operations: ["read", "analyze", "report"]
+    forbidden_operations: ["trade", "execute", "modify"]
+    typical_constraints:
+      - "read_only_access"
+      - "no_trading_actions"
+      - "reporting_only"
+
+server_capabilities:
+  weather_service:
+    provides: ["weather_data", "forecasts", "climate_info"]
+    boundaries: ["public_data_only", "no_personal_tracking"]
+    data_sensitivity: "public"
+    
+  financial_data:
+    provides: ["market_data", "prices", "analytics"]
+    boundaries: ["no_trading", "read_only", "delayed_data"]
+    data_sensitivity: "restricted"
+    
+  document_service:
+    provides: ["document_search", "content_analysis"]
+    boundaries: ["no_modification", "read_only", "metadata_only"]
+    data_sensitivity: "confidential"
