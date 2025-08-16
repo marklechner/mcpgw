@@ -1,0 +1,60 @@
+# MCP Gateway Configuration
+
+# Server settings
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  log_level: "info"
+
+# Security settings
+security:
+  default_policy:
+    max_requests_per_minute: 60
+    max_request_size: 1048576  # 1MB
+    require_auth: true
+    sandbox_mode: true
+    allowed_origins: []
+  
+  # JWT settings (for future enhancement)
+  jwt:
+    secret_key: "your-secret-key-change-this"
+    algorithm: "HS256"
+    access_token_expire_minutes: 30
+
+# MCP Server configurations
+mcp_servers:
+  example-weather:
+    command: "node"
+    args: ["/path/to/weather-server/build/index.js"]
+    env:
+      OPENWEATHER_API_KEY: "your-api-key"
+    enabled: true
+    timeout: 30
+    max_connections: 10
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  audit_log_retention_days: 30
+  max_audit_entries: 10000
+
+# Rate limiting
+rate_limiting:
+  enabled: true
+  storage: "memory"  # Options: memory, redis
+  redis_url: "redis://localhost:6379"  # Only used if storage is redis
+
+# Monitoring and metrics
+monitoring:
+  enabled: true
+  metrics_endpoint: "/metrics"
+  health_check_interval: 30
+
+# CORS settings
+cors:
+  allow_credentials: true
+  allow_methods: ["GET", "POST", "OPTIONS"]
+  allow_headers: ["*"]
+  max_age: 600
